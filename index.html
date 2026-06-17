@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBISL Campus - Module 6 Interactive Practicum Dashboard</title>
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts: Inter for English, Abhaya Libre & Google Fonts for beautiful Sinhala -->
+    <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- React & Babel CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" crossorigin></script>
+
+    <!-- Tailwind Configuration for custom brand themes -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            900: '#064e3b',
+                        },
+                        tech: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+                        sinhala: ['Abhaya Libre', 'Iskoola Pota', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/css">
+        /* Hide scrollbars for side navigation while retaining scrollability */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Glassmorphism custom design tokens */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Ambient glow animation */
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1) translate(0px, 0px); opacity: 0.15; }
+            50% { transform: scale(1.1) translate(20px, -20px); opacity: 0.25; }
+        }
+        .animate-pulse-slow-1 {
+            animation: pulse-slow 8s infinite alternate ease-in-out;
+        }
+        .animate-pulse-slow-2 {
+            animation: pulse-slow 12s infinite alternate-reverse ease-in-out;
+        }
+
+        /* Print Layout Adjustments */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 12pt;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .glass-panel {
+                background: white !important;
+                color: black !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            .text-slate-400, .text-slate-500, .text-slate-300 {
+                color: #334155 !important;
+            }
+            .text-emerald-400, .text-brand-400 {
+                color: #047857 !important;
+            }
+            .text-blue-400, .text-tech-400 {
+                color: #1d4ed8 !important;
+            }
+            .active-tab-container {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen overflow-x-hidden relative">
+
+    <!-- Non-interactive ambient glowing orbs -->
+    <div class="fixed top-12 left-1/4 w-96 h-96 bg-brand-600/20 rounded-full blur-[120px] pointer-events-none animate-pulse-slow-1 z-0"></div>
+    <div class="fixed bottom-12 right-1/4 w-[450px] h-[450px] bg-tech-600/15 rounded-full blur-[140px] pointer-events-none animate-pulse-slow-2 z-0"></div>
+
+    <!-- React App Root Container -->
+    <div id="root" class="relative z-10 min-h-screen flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Custom Inline SVG Icons to guarantee absolute standalone rendering
+        const IconCase = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+        );
+        const IconDeepDive = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+        );
+        const IconScenario = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+        );
+        const IconLab = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+        );
+        const IconSim1 = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+        );
+        const IconSim2 = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+        );
+        const IconSim3 = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H16" /></svg>
+        );
+        const IconBreakout = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+        );
+        const IconPrint = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+        );
+
+        // Core App Component
+        function App() {
+            const [activeTab, setActiveTab] = useState(0);
+            const [langMode, setLangMode] = useState('en'); // Strictly 'en' or 'si'
+
+            // Shared Bilingual Renderer Component inside the App scope
+            // Switches completely based on 'langMode' for 100% pure single-language experience.
+            const Bilingual = ({ en, si, className = "" }) => {
+                if (langMode === 'en') {
+                    return <span className={`${className} font-sans`}>{en}</span>;
+                }
+                return <span className={`${className} font-sinhala leading-relaxed`}>{si}</span>;
+            };
+
+            // Custom dynamic states for Calculator Labs
+            const [calcEd, setCalcEd] = useState({ p1: 1000, p2: 1200, q1: 500, q2: 380 });
+            const [calcBundle, setCalcBundle] = useState({ pA: 3500, pB: 1500, discount: 20, useFractional: true });
+
+            // Simulation 1 State
+            const [sim1Industry, setSim1Industry] = useState('tea');
+            const [sim1Layers, setSim1Layers] = useState({ core: true, actual: false, augmented: false });
+            const [sim1Processing, setSim1Processing] = useState(false);
+            const [sim1Output, setSim1Output] = useState(null);
+
+            // Simulation 2 State
+            const [sim2Strategy, setSim2Strategy] = useState('skimming');
+
+            // Simulation 3 State
+            const [sim3Workflow, setSim3Workflow] = useState('linear');
+
+            // Breakout accordion states
+            const [breakoutActive, setBreakoutActive] = useState(null);
+            const [breakoutCompleted, setBreakoutCompleted] = useState({});
+
+            // Trigger System Simulation 1 deployment
+            const handleSim1Deploy = () => {
+                setSim1Processing(true);
+                setTimeout(() => {
+                    setSim1Processing(false);
+                    const activatedCount = Object.values(sim1Layers).filter(Boolean).length;
+                    let margin = 5;
+                    let elasticity = 2.5;
+                    let positioningEn = "Commodity Trap";
+                    let positioningSi = "භාණ්ඩමය උගුල (Commodity Trap)";
+                    let retention = "15%";
+
+                    if (activatedCount === 1) {
+                        margin = 5;
+                        elasticity = 2.5;
+                        positioningEn = "Commodity Trap";
+                        positioningSi = "භාණ්ඩමය උගුල (Commodity Trap)";
+                        retention = "10% - 15%";
+                    } else if (activatedCount === 2) {
+                        margin = 25;
+                        elasticity = 1.4;
+                        positioningEn = "Market Challenger";
+                        positioningSi = "වෙළඳපල අභියෝගකරු (Market Challenger)";
+                        retention = "40% - 50%";
+                    } else if (activatedCount === 3) {
+                        margin = 55;
+                        elasticity = 0.45;
+                        positioningEn = "Uncontested Premium Value Leader";
+                        positioningSi = "ප්‍රිමියම් අගය නායකයා (Premium Value Leader)";
+                        retention = "85% - 92%";
+                    }
+
+                    setSim1Output({ margin, elasticity, positioningEn, positioningSi, retention });
+                }, 1200);
+            };
+
+            // Reset Sim 1 when change industry
+            useEffect(() => {
+                setSim1Output(null);
+                setSim1Layers({ core: true, actual: false, augmented: false });
+            }, [sim1Industry]);
+
+            // Formulate standard calculations for Price Elasticity
+            const calculateElasticity = () => {
+                const { p1, p2, q1, q2 } = calcEd;
+                const pChange = p1 !== 0 ? ((p2 - p1) / p1) * 100 : 0;
+                const qChange = q1 !== 0 ? ((q2 - q1) / q1) * 100 : 0;
+                const elasticity = pChange !== 0 ? qChange / pChange : 0;
+                const absEd = Math.abs(elasticity);
+
+                const originalRev = p1 * q1;
+                const newRev = p2 * q2;
+                const revChange = newRev - originalRev;
+
+                return {
+                    pChange: pChange.toFixed(1),
+                    qChange: qChange.toFixed(1),
+                    ed: elasticity.toFixed(2),
+                    absEd: absEd.toFixed(2),
+                    originalRev: originalRev.toLocaleString(),
+                    newRev: newRev.toLocaleString(),
+                    revChange: revChange,
+                    isElastic: absEd > 1,
+                    isUnitary: absEd === 1
+                };
+            };
+
+            const edResults = calculateElasticity();
+
+            // Formulate calculations for Bundle Pricing Simulator
+            const calculateBundlePricing = () => {
+                const { pA, pB, discount, useFractional } = calcBundle;
+                const standardSum = pA + pB;
+                const discountedRaw = standardSum * (1 - discount / 100);
+                
+                let finalPrice = discountedRaw;
+                let originalLeftDigit = Math.floor(discountedRaw).toString()[0];
+                let perceivedLeftDigit = originalLeftDigit;
+
+                if (useFractional) {
+                    const roundedHund = Math.round(discountedRaw / 100) * 100;
+                    finalPrice = roundedHund - 1;
+                    perceivedLeftDigit = Math.floor(finalPrice).toString()[0];
+                }
+
+                const buyerSavings = standardSum - finalPrice;
+                const realDiscountPct = ((buyerSavings / standardSum) * 100).toFixed(1);
+
+                return {
+                    standardSum: standardSum.toLocaleString(),
+                    discountedRaw: Math.round(discountedRaw).toLocaleString(),
+                    finalPrice: Math.round(finalPrice).toLocaleString(),
+                    buyerSavings: Math.round(buyerSavings).toLocaleString(),
+                    realDiscountPct,
+                    originalLeftDigit,
+                    perceivedLeftDigit,
+                    hasLeftDigitShift: originalLeftDigit !== perceivedLeftDigit && useFractional
+                };
+            };
+
+            const bundleResults = calculateBundlePricing();
+
+            const tabMeta = [
+                { id: 0, label_en: "Case Insight", label_si: "සිද්ධි විග්‍රහය", icon: <IconCase /> },
+                { id: 1, label_en: "Deep Dive Analysis", label_si: "න්‍යායාත්මක විශ්ලේෂණය", icon: <IconDeepDive /> },
+                { id: 2, label_en: "Scenario Suite", label_si: "ප්‍රායෝගික අවස්ථා", icon: <IconScenario /> },
+                { id: 3, label_en: "Diagnostic Lab", label_si: "පරීක්ෂණාගාරය", icon: <IconLab /> },
+                { id: 4, label_en: "Layer Architect", label_si: "නිෂ්පාදන ස්ථර සැකසුම", icon: <IconSim1 /> },
+                { id: 5, label_en: "Strategic Cascade", label_si: "උපායමාර්ගික ප්‍රවාහය", icon: <IconSim2 /> },
+                { id: 6, label_en: "Workflow Sim", label_si: "කාර්ය ප්‍රවාහ සංසන්දනය", icon: <IconSim3 /> },
+                { id: 7, label_en: "Breakout Rooms", label_si: "සාකච්ඡා කාමර", icon: <IconBreakout /> }
+            ];
+
+            return (
+                <div className="flex flex-1 flex-col md:flex-row relative">
+                    
+                    {/* FIXED SIDE NAVIGATION */}
+                    <nav className="no-print w-full md:w-64 glass-panel border-r border-slate-800/80 md:sticky md:top-0 md:h-screen flex flex-col justify-between shrink-0 z-40 transition-all duration-300">
+                        <div>
+                            {/* Brand Header */}
+                            <div className="p-6 border-b border-slate-800/60 flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-extrabold text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                                        O
+                                    </div>
+                                    <div>
+                                        <h1 className="font-bold text-sm tracking-wide text-white">OBISL CAMPUS</h1>
+                                        <p className="text-[10px] text-emerald-400 font-semibold tracking-wider uppercase">
+                                            <Bilingual en="Practicum Hub" si="ප්‍රායෝගික මධ්‍යස්ථානය" />
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sidebar Tab Options */}
+                            <div className="p-4 space-y-1 overflow-y-auto no-scrollbar md:max-h-[calc(100vh-220px)]">
+                                {tabMeta.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group text-left ${
+                                            activeTab === tab.id
+                                                ? "bg-brand-500/15 text-emerald-400 border border-brand-500/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]"
+                                                : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/60"
+                                        }`}
+                                    >
+                                        <div className={`transition-transform duration-200 group-hover:scale-110 ${activeTab === tab.id ? "text-emerald-400" : "text-slate-400"}`}>
+                                            {tab.icon}
+                                        </div>
+                                        <div className="text-xs font-semibold">
+                                            <Bilingual en={tab.label_en} si={tab.label_si} />
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Print Control Option at Sidebar Bottom */}
+                        <div className="p-4 border-t border-slate-800/60 bg-slate-950/40">
+                            <button
+                                onClick={() => window.print()}
+                                className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 transition-all duration-200"
+                            >
+                                <IconPrint />
+                                <span className="text-xs font-bold font-sans">
+                                    <Bilingual en="Export / Print" si="ප්‍රකාශනය මුද්‍රණය කරන්න" />
+                                </span>
+                            </button>
+                        </div>
+                    </nav>
+
+                    {/* MAIN WORKING CANVAS */}
+                    <main className="flex-1 flex flex-col min-w-0">
+                        
+                        {/* STICKY TOP HEADER WITH 100% LANGUAGE TOGGLE */}
+                        <header className="no-print sticky top-0 glass-panel border-b border-slate-800/80 p-4 md:px-8 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 z-30 shadow-md">
+                            <div>
+                                <div className="flex items-center space-x-2">
+                                    <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span className="text-xs tracking-widest text-slate-400 font-bold uppercase font-sans">
+                                        <Bilingual en="Bilingual Practicum System" si="ද්විභාෂා ප්‍රායෝගික පද්ධතිය" />
+                                    </span>
+                                </div>
+                                <h2 className="text-lg font-bold text-white mt-0.5">
+                                    <Bilingual en="Module 6: Product & Pricing Strategies" si="මොඩියුලය 6: භාණ්ඩ සහ මිලකරණ උපායමාර්ග" />
+                                </h2>
+                            </div>
+
+                            {/* Strictly 100% Toggle with no dual language options */}
+                            <div className="flex bg-slate-900/90 border border-slate-800 p-1.5 rounded-2xl relative shadow-inner">
+                                <button
+                                    onClick={() => setLangMode('en')}
+                                    className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
+                                        langMode === 'en' ? 'bg-brand-500 text-slate-950 shadow-md font-sans' : 'text-slate-400 hover:text-slate-200'
+                                    }`}
+                                >
+                                    English
+                                </button>
+                                <button
+                                    onClick={() => setLangMode('si')}
+                                    className={`px-4 py-1.5 rounded-xl text-xs font-bold font-sinhala transition-all duration-150 ${
+                                        langMode === 'si' ? 'bg-brand-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+                                    }`}
+                                >
+                                    සිංහල
+                                </button>
+                            </div>
+                        </header>
+
+                        {/* WORKSPACE AREA */}
+                        <div className="p-4 md:p-8 active-tab-container relative">
+                            
+                            {/* TAB 0: CASE INSIGHT */}
+                            {activeTab === 0 && (
+                                <div className="space-y-6">
+                                    {/* Intro Banner */}
+                                    <div className="glass-panel p-6 rounded-3xl border-l-4 border-emerald-500">
+                                        <h3 className="text-xl font-extrabold text-white">
+                                            <Bilingual en="🌐 Case Insight: The Ceylon Organic Tea Export Paradigm" si="🌐 සිද්ධි විග්‍රහය: ලංකා කාබනික තේ අපනයන ආකෘතිය" />
+                                        </h3>
+                                        <p className="text-sm text-slate-400 mt-2 leading-relaxed">
+                                            <Bilingual 
+                                                en="Synthesizing the strategic core transition from bulk, highly elastic commodity exports into inelastic augmented premium products." 
+                                                si="තොග වශයෙන් අපනයනය කරනු ලබන අධික මිල නම්‍යශීලී තේ නිෂ්පාදනයක්, ඉහළ මිලක් නියම කළ හැකි අනම්‍ය වර්ධිත වාරික සන්නාමයක් බවට පරිවර්තනය කිරීමේ ප්‍රායෝගික උදාහරණය."
+                                            />
+                                        </p>
+                                    </div>
+
+                                    {/* Problem, Approach, Result Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        
+                                        {/* Card 1: Problem */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-red-500/20 shadow-lg relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-2xl group-hover:bg-red-500/10 transition-all"></div>
+                                            <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-extrabold bg-red-500/10 text-red-400 border border-red-500/20">
+                                                <Bilingual en="The Commodity Trap" si="භාණ්ඩමය උගුල (Commodity Trap)" />
+                                            </span>
+                                            <h4 className="text-base font-bold text-slate-100 mt-4 mb-2">
+                                                <Bilingual en="Bulk Commodity Vulnerability" si="තොග භාණ්ඩ වෙළඳපල අර්බුදය" />
+                                            </h4>
+                                            <p className="text-sm text-slate-400 leading-relaxed">
+                                                <Bilingual 
+                                                    en="Exporters sent bulk tea at raw commodity rates ($3.50/kg) yielding razor-thin 5% margins. This model was highly vulnerable to global auction fluctuations. The Price Elasticity of Demand was extremely high (|Ed| = 2.4); any unilateral price increase resulted in instant client loss." 
+                                                    si="අපනයනකරුවන් තොග තේ ඉතා අඩු මිලට ($3.50/kg) සහ 5%ක ලාභ ආන්තිකයකට අපනයනය කරන ලදී. මිල නම්‍යතාවය ඉතා ඉහළ විය (|Ed| = 2.4). මිල සුළු වශයෙන් හෝ වැඩි කිරීමට යාමේදී ගැනුම්කරුවන් ඇණවුම් සම්පූර්ණයෙන්ම වෙනත් රටවලට මාරු කළහ."
+                                                />
+                                            </p>
+                                        </div>
+
+                                        {/* Card 2: Approach */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-blue-500/20 shadow-lg relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all"></div>
+                                            <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-extrabold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                <Bilingual en="Total Product Concept" si="සමස්ත නිෂ්පාදන සංකල්පය" />
+                                            </span>
+                                            <h4 className="text-base font-bold text-slate-100 mt-4 mb-2">
+                                                <Bilingual en="Engineering the Value Mix" si="අගය දාමය ප්‍රතිනිර්මාණය කිරීම" />
+                                            </h4>
+                                            <p className="text-sm text-slate-400 leading-relaxed">
+                                                <Bilingual 
+                                                    en="Re-engineered the product levels. Upgraded Core from 'hot beverage' to 'mindfulness luxury gift'. Crafted Actual attributes: single-origin organic green tea packed in biodegradable custom wooden canisters. Added Augmented services: Traceable blockchain QR codes showing farm-to-cup origin, and carbon-neutral transit certifications." 
+                                                    si="සමස්ත නිෂ්පාදන සංකල්පය යොදන ලදී: මූලික ප්‍රතිලාභය 'උණුසුම් පානයක්' සිට 'සුවතා සහ තෑගි අත්දැකීමක්' දක්වා ඔසවන ලදී. සැබෑ නිෂ්පාදනය: පරිසර හිතකාමී ලී පෙට්ටි සහ උසස් තේ කොළ. වර්ධිත නිෂ්පාදනය: තේ වත්තේ සිට කෝප්පය දක්වා ගමන පෙන්වන QR කේතය සහ කාබන් උදාසීන වගකීම."
+                                                />
+                                            </p>
+                                        </div>
+
+                                        {/* Card 3: Result */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-emerald-500/20 shadow-lg relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all"></div>
+                                            <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                <Bilingual en="Value Capture Success" si="මිල සංවේදීතාවය ජය ගැනීම" />
+                                            </span>
+                                            <h4 className="text-base font-bold text-slate-100 mt-4 mb-2">
+                                                <Bilingual en="Bypassing Price Sensitivity" si="ඉහළ වාරික ආදායම" />
+                                            </h4>
+                                            <p className="text-sm text-slate-400 leading-relaxed">
+                                                <Bilingual 
+                                                    en="Price successfully scaled from $3.50/kg to $14.50/kg. Brand demand elasticity shifted from highly elastic to highly inelastic (|Ed| = 0.45). Successfully crossed the 'Chasm' to capture mainstream premium EU and Middle-East distributors, unlocking sustainable 55% margins." 
+                                                    si="මිල සාර්ථක ලෙස කිලෝග්‍රෑමයකට $3.50 සිට $14.50 දක්වා ඉහළ නංවන ලදී. මිල නම්‍යතාවය අධික නම්‍යශීලී මට්ටමේ සිට අතිශය අනම්‍යශීලී (|Ed| = 0.45) මට්ටමක් දක්වා පරිවර්තනය විය. වෙළඳපල හිදැස (Chasm) සාර්ථකව ජය ගනිමින් ලාභය 55% දක්වා ඉහළ නංවන ලදී."
+                                                />
+                                            </p>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 1: DEEP DIVE ANALYSIS */}
+                            {activeTab === 1 && (
+                                <div className="space-y-6">
+                                    <div className="glass-panel p-6 rounded-3xl border-l-4 border-blue-500 mb-6">
+                                        <h3 className="text-xl font-extrabold text-white">
+                                            <Bilingual en="🏢 Core Product & Pricing Conflicts" si="🏢 න්‍යායාත්මක හරය සහ ඝට්ටන පත්‍රිකා" />
+                                        </h3>
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            <Bilingual en="Deconstruct the three critical business conflicts described in Module 6." si="නිෂ්පාදන සහ මිලකරණ උපායමාර්ගවල ඇති මූලික න්‍යායාත්මක ඝට්ටන 3ක් මෙහිදී විග්‍රහ කෙරේ." />
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        
+                                        {/* Conflict Card 1 */}
+                                        <div className="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all duration-150">
+                                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                                                <div className="space-y-2">
+                                                    <span className="text-xs text-brand-400 font-bold tracking-wider uppercase">
+                                                        <Bilingual en="Conflict 1" si="ඝට්ටනය 1" />
+                                                    </span>
+                                                    <h4 className="text-lg font-bold text-white">
+                                                        <Bilingual en="Core Benefit vs. Augmented Layer Over-engineering" si="මූලික ප්‍රතිලාභය සහ වර්ධිත ස්ථරය අධික ලෙස සැලසුම් කිරීම" />
+                                                    </h4>
+                                                    <p className="text-sm text-slate-400">
+                                                        <Bilingual 
+                                                            en="While core functional value satisfies basic consumer requirements, competitive differentiation occurs in the augmented layer. However, expanding services (customization, extensive warranties, tracing) escalates cost-of-goods-sold (COGS). If not matched with strategic pricing, profit pools collapse rapidly." 
+                                                            si="මූලික අවශ්‍යතාවය සපුරාලීමට අමතරව, වෙළඳපල තරඟකාරිත්වය ජය ගන්නේ වර්ධිත ස්ථරයෙනි. නමුත්, වර්ධිත ස්ථරය වැඩිදියුණු කිරීමට යාමේදී (උදා: විශේෂඥ සහාය, දීර්ඝ වගකීම්) නිෂ්පාදන පිරිවැය ශීඝ්‍රයෙන් ඉහළ යයි. එයට සරිලන මිල සූත්‍රයක් නොමැති නම් ලාභය නැතිවේ."
+                                                        />
+                                                    </p>
+                                                </div>
+                                                <div className="bg-brand-500/10 text-brand-400 text-xs px-4 py-2 rounded-xl border border-brand-500/20 shrink-0 font-mono text-center h-fit">
+                                                    <Bilingual en="Augmentation Trap" si="වර්ධිත උගුල" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Conflict Card 2 */}
+                                        <div className="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all duration-150">
+                                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                                                <div className="space-y-2">
+                                                    <span className="text-xs text-tech-400 font-bold tracking-wider uppercase">
+                                                        <Bilingual en="Conflict 2" si="ඝට්ටනය 2" />
+                                                    </span>
+                                                    <h4 className="text-lg font-bold text-white">
+                                                        <Bilingual en="Price Skimming vs. Market Penetration Thresholds" si="මිල උරාගැනීම සහ වෙළඳපල ආක්‍රමණය අතර ඇති ගැටුම" />
+                                                    </h4>
+                                                    <p className="text-sm text-slate-400">
+                                                        <Bilingual 
+                                                            en="Skimming targets low-elasticity customers to capture maximum margin. Penetration targets high-elasticity segments to generate economies of scale and establish market entry barriers. Misapplying skimming in a high-substitution market triggers immediate customer churn, while low-price penetration on premium brands permanently destroys brand equity." 
+                                                            si="මිල උරාගැනීම යොදාගන්නේ මිල ගැන නොතකන සුළු පිරිසක් ඉලක්ක කර ඉහළ ලාභ ලැබීමටය (උදා: නව තාක්ෂණය). ආක්‍රමණ මිලකරණය යොදාගන්නේ අඩු මිලක් මඟින් විශාල පිරිසක් ආකර්ෂණය කරගැනීමටය. සාමාන්‍ය වෙළඳ භාණ්ඩයකට මිල උරාගැනීම යෙදීම හෝ ප්‍රිමියම් භාණ්ඩයකට ආක්‍රමණ මිලකරණය යෙදීම සන්නාමයේ විනාශයට මඟ පාදයි."
+                                                        />
+                                                    </p>
+                                                </div>
+                                                <div className="bg-tech-500/10 text-tech-400 text-xs px-4 py-2 rounded-xl border border-tech-500/20 shrink-0 font-mono text-center h-fit">
+                                                    <Bilingual en="Elasticity Trade-off" si="නම්‍යතා වෙළඳ හුවමාරුව" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Conflict Card 3 */}
+                                        <div className="glass-panel p-6 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all duration-150">
+                                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                                                <div className="space-y-2">
+                                                    <span className="text-xs text-yellow-500 font-bold tracking-wider uppercase">
+                                                        <Bilingual en="Conflict 3" si="ඝට්ටනය 3" />
+                                                    </span>
+                                                    <h4 className="text-lg font-bold text-white">
+                                                        <Bilingual en="The Innovation Diffusion Chasm" si="නවෝත්පාදන ව්‍යාප්තියේ පරතරය (The Chasm)" />
+                                                    </h4>
+                                                    <p className="text-sm text-slate-400">
+                                                        <Bilingual 
+                                                            en="Disruptive innovations often stall when transitioning from enthusiastic Early Adopters to highly pragmatic Early Majority buyers. Early Adopters absorb defects for novel status. The Early Majority, however, expects a perfect 'Whole Product' complete with a reliable service ecosystem. Failure to expand augmented support here causes product failure." 
+                                                            si="බොහෝ නවෝත්පාදන අසාර්ථක වන්නේ මුල් කාලීන උනන්දුවක් දක්වන්නන්ගෙන් (Early Adopters) ප්‍රායෝගික ගැනුම්කරුවන් (Early Majority) වෙත සංක්‍රමණය වීමේදී ඇතිවන පරතරයෙනි. ප්‍රායෝගික ගැනුම්කරුවන් බලාපොරොත්තු වන්නේ කිසිදු දෝෂයක් නොමැති, පූර්ණ සහයෝගය ලැබෙන පූර්ණ නිෂ්පාදනයකි (Whole Product)."
+                                                        />
+                                                    </p>
+                                                </div>
+                                                <div className="bg-yellow-500/10 text-yellow-500 text-xs px-4 py-2 rounded-xl border border-yellow-500/20 shrink-0 font-mono text-center h-fit">
+                                                    <Bilingual en="The Chasm Trap" si="හිදැසෙහි උගුල" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 2: SCENARIO SUITE */}
+                            {activeTab === 2 && (
+                                <div className="space-y-6">
+                                    <div className="glass-panel p-6 rounded-3xl border-l-4 border-brand-500 mb-6">
+                                        <h3 class="text-xl font-extrabold text-white">
+                                            <Bilingual en="🧪 Scenario Suite: Real-World Business Labs" si="🧪 ප්‍රායෝගික අවස්ථා පරීක්ෂණ: ශ්‍රී ලාංකීය ව්‍යාපාරික ආකෘති" />
+                                        </h3>
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            <Bilingual en="Evaluate localized business scenarios. Choose tactical setups to preview performance feedback." si="දේශීය පරිසරයට ගැලපෙන විවිධ ප්‍රායෝගික අවස්ථා තුනක් විශ්ලේෂණය කර, උපායමාර්ග තෝරා ප්‍රතිඵල නිරීක්ෂණය කරන්න." />
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        
+                                        {/* Scenario A */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-slate-800 flex flex-col justify-between">
+                                            <div>
+                                                <span className="text-xs text-emerald-400 font-extrabold font-mono uppercase">
+                                                    <Bilingual en="Case A: Agro-Tech Sensors" si="අවස්ථාව A: කෘෂි තාක්ෂණික මෘදුකාංග" />
+                                                </span>
+                                                <h4 className="text-base font-bold text-slate-100 mt-2 mb-3">
+                                                    <Bilingual en="Lanka Smart Irrigation Kit" si="ලංකා ඇග්‍රෝ-ටෙක් ස්මාර්ට් ජල සංවේදක" />
+                                                </h4>
+                                                <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                                                    <Bilingual 
+                                                        en="A tech startup deploys solar-powered IoT monitoring kits with heavy upfront R&D overheads. Farmers are price-sensitive but face high losses due to unstable weather patterns." 
+                                                        si="දේශීය කෘෂිකාර්මික ක්ෂේත්‍රය සඳහා ස්මාර්ට් ජල සංවේදක කට්ටලයක් හඳුන්වා දෙයි. ඉහළ පර්යේෂණ පිරිවැයක් ඇති නමුත් ගොවීන් ඉතා මිල සංවේදී වන අතර දේශගුණික විපර්යාස නිසා අසරණව සිටිති."
+                                                    />
+                                                </p>
+                                                
+                                                <div className="border-t border-slate-800/80 pt-4 mt-2">
+                                                    <span className="text-xs font-bold text-slate-300 block mb-2">
+                                                        <Bilingual en="Strategy Testing Feedback:" si="උපායමාර්ග පරීක්ෂණ ප්‍රතිපෝෂණය:" />
+                                                    </span>
+                                                    <div className="space-y-2">
+                                                        <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs">
+                                                            <div className="font-semibold text-red-400 mb-1">
+                                                                <Bilingual en="Flat Cost-Plus Pricing (Rs. 85,000)" si="පිරිවැය මත මිල නියම කිරීම (Rs. 85,000)" />
+                                                            </div>
+                                                            <p className="text-[10px] text-slate-400">
+                                                                <Bilingual en="Fails to cross Chasm. High capital requirement blocks the pragmatists." si="පරතරය (Chasm) ජයගත නොහැක. අධික මුලික පිරිවැය නිසා ගොවීන් පසුබට වේ." />
+                                                            </p>
+                                                        </div>
+                                                        <div className="p-3 bg-slate-900/80 rounded-xl border border-emerald-500/20 text-xs">
+                                                            <div className="font-semibold text-emerald-400 mb-1">
+                                                                <Bilingual en="Good-Better-Best Tiered Bundles" si="හොඳ-වඩා හොඳ-හොඳම මිල මට්ටම් කිරීම" />
+                                                            </div>
+                                                            <p className="text-[10px] text-slate-400">
+                                                                <Bilingual en="Success. Standard tier anchors buyers safely into the high-margin mid tier." si="සාර්ථකයි. පාරිභෝගිකයින් මධ්‍යම ප්‍රමාණයේ පැකේජය මිලදී ගැනීමට යොමු වේ." />
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Scenario B */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-slate-800 flex flex-col justify-between">
+                                            <div>
+                                                <span className="text-xs text-emerald-400 font-extrabold font-mono uppercase">
+                                                    <Bilingual en="Case B: EV Retrofitting" si="අවස්ථාව B: විද්‍යුත් රථ වාහන පරිවර්තනය" />
+                                                </span>
+                                                <h4 className="text-base font-bold text-slate-100 mt-2 mb-3">
+                                                    <Bilingual en="Electric Tuk Retrofit Kit" si="'Sena-Tuk' ත්‍රිරෝද රථ විද්‍යුත් පරිවර්තනය" />
+                                                </h4>
+                                                <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                                                    <Bilingual 
+                                                        en="A green mobility firm launches EV conversion kits for three-wheelers. High battery imports dictate high pricing, but drivers rely entirely on daily cash flows." 
+                                                        si="පෙට්‍රල් ත්‍රිරෝද රථ සඳහා විද්‍යුත් මෝටර් කට්ටල හඳුන්වා දෙයි. අධික බැටරි පිරිවැය නිසා එකවර විශාල මුදලක් ගෙවීමට සිදුවන නමුත් රියදුරන්ට එදිනෙදා වියදම් පියවා ගැනීම දුෂ්කරය."
+                                                    />
+                                                </p>
+                                                
+                                                <div className="border-t border-slate-800/80 pt-4 mt-2">
+                                                    <span className="text-xs font-bold text-slate-300 block mb-2">
+                                                        <Bilingual en="Strategy Testing Feedback:" si="උපායමාර්ග පරීක්ෂණ ප්‍රතිපෝෂණය:" />
+                                                    </span>
+                                                    <div className="space-y-2">
+                                                        <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs">
+                                                            <div className="font-semibold text-red-400 mb-1">
+                                                                <Bilingual en="Premium Price Skimming (Rs. 450,000)" si="ඉහළ මිලක් (Rs. 450,000) අය කිරීම (Skimming)" />
+                                                            </div>
+                                                            <p className="text-[10px] text-slate-400">
+                                                                <Bilingual en="Stagnation. Zero adoption among daily wage-earners." si="අසාර්ථකයි. එදිනෙදා ආදායම් ලබන රියදුරන් මිලදී නොගනිති." />
+                                                            </p>
+                                                        </div>
+                                                        <div className="p-3 bg-slate-900/80 rounded-xl border border-emerald-500/20 text-xs">
+                                                            <div className="font-semibold text-emerald-400 mb-1">
+                                                                <Bilingual en="Augmented Battery Subscription (BaaS)" si="බැටරිය කුලී පදනම මත ලබා දීම (BaaS)" />
+                                                            </div>
+                                                            <p className="text-[10px] text-slate-400">
+                                                                <Bilingual en="High volume conversion. Lowers entry barrier via recurring augmented utility." si="ඉතා සාර්ථකයි. මුලික ආයෝජනය අඩු කරමින් දිනපතා කුලියට බැටරි මාරු කිරීමේ ක්‍රමය." />
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Scenario C */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-slate-800 flex flex-col justify-between">
+                                            <div>
+                                                <span className="text-xs text-emerald-400 font-extrabold font-mono uppercase">
+                                                    <Bilingual en="Case C: Premium Spice Export" si="අවස්ථාව C: වාරික කුළුබඩු අපනයනය" />
+                                                </span>
+                                                <h4 className="text-base font-bold text-slate-100 mt-2 mb-3">
+                                                    <Bilingual en="Ceylon Heritage Spice Collection" si="'සිලෝන් හෙරිටේජ්' කුළුබඩු එකතුව" />
+                                                </h4>
+                                                <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                                                    <Bilingual 
+                                                        en="Launching organic Cinnamon gift sets inside Colombo Airport terminals targeting high-income tourists. Raw generic spices create heavy low-price competition." 
+                                                        si="කොළඹ ගුවන් තොටුපලේ සංචාරකයින් ඉලක්ක කර වාරික කුළුබඩු එකතුවක් හඳුන්වා දෙයි. බාල ප්‍රමිතියෙන් යුතු ලාභදායී නිෂ්පාදන වලින් දැඩි තරඟයක් පවතී."
+                                                    />
+                                                </p>
+                                                
+                                                <div className="border-t border-slate-800/80 pt-4 mt-2">
+                                                    <span className="text-xs font-bold text-slate-300 block mb-2">
+                                                        <Bilingual en="Strategy Testing Feedback:" si="උපායමාර්ග පරීක්ෂණ ප්‍රතිපෝෂණය:" />
+                                                    </span>
+                                                    <div className="space-y-2">
+                                                        <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs">
+                                                            <div className="font-semibold text-red-400 mb-1">
+                                                                <Bilingual en="Price Discount Matching ($8.00)" si="තරඟකාරී අඩු මිල ගණන් වලට සමාන කිරීම ($8.00)" />
+                                                            </div>
+                                                            <p className="text-[10px] text-slate-400">
+                                                                <Bilingual en="Erodes premium positioning, pulling the brand into the commodity trap." si="වාරික ප්‍රතිරූපය විනාශ වන අතර ලාභදායී සාමාන්‍ය මට්ටමට ඇද වැටේ." />
+                                                            </p>
+                                                        </div>
+                                                        <div className="p-3 bg-slate-900/80 rounded-xl border border-emerald-500/20 text-xs">
+                                                            <div className="font-semibold text-emerald-400 mb-1">
+                                                                <Bilingual en="Skimming & Left-Digit Bias ($49.99)" si="මිල උරාගැනීම සහ මනෝවිද්‍යාත්මක මිල ($49.99)" />
+                                                            </div>
+                                                            <p className="text-[10px] text-slate-400">
+                                                                <Bilingual en="Excellent. Luxury packaging shifts perceptions to premium souvenir buying." si="සාර්ථකයි. අලංකාර ඇසුරුම් සහ $49.99 මිල මනෝවිද්‍යාත්මකව අගය තහවුරු කරයි." />
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 3: DIAGNOSTIC LAB */}
+                            {activeTab === 3 && (
+                                <div className="space-y-6">
+                                    <div className="glass-panel p-6 rounded-3xl border-l-4 border-emerald-500 mb-6">
+                                        <h3 className="text-xl font-extrabold text-white">
+                                            <Bilingual en="⚙️ Diagnostic Lab: Interactive Revenue Optimizers" si="⚙️ පරීක්ෂණාගාරය: අන්තර්ක්‍රියාකාරී මිල සහ ආදායම් සිමියුලේටර්" />
+                                        </h3>
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            <Bilingual en="Test elasticity formulas and psychological price anchors under dynamic conditions." si="මිල නම්‍යතාවය සහ මනෝවිද්‍යාත්මක මිලකරණ සීමාවන් සජීවීව වෙනස් කරමින් ආදායම් වෙනස්වීම් ගණනය කරන්න." />
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        
+                                        {/* Calculator 1: Price Elasticity */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-4">
+                                            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                                                <h4 className="text-base font-bold text-white">
+                                                    <Bilingual en="1. Price Elasticity of Demand ($E_d$) Calculator" si="1. ඉල්ලුමේ මිල නම්‍යතාවය ($E_d$) කැල්කියුලේටරය" />
+                                                </h4>
+                                                <span className="text-xs font-mono font-bold bg-slate-900 px-2.5 py-1 rounded-lg text-emerald-400 border border-slate-800">
+                                                    Ed = %ΔQ / %ΔP
+                                                </span>
+                                            </div>
+
+                                            {/* Price & Quantity Controls */}
+                                            <div className="space-y-4 pt-2">
+                                                {/* Initial Price Slider */}
+                                                <div>
+                                                    <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                                                        <Bilingual en="Initial Price (P1)" si="ආරම්භක මිල (P1)" />
+                                                        <span className="text-white font-bold font-mono">LKR {calcEd.p1}</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="100" max="3000" step="50" 
+                                                        value={calcEd.p1} 
+                                                        onChange={(e) => setCalcEd({ ...calcEd, p1: parseInt(e.target.value) })}
+                                                        className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500" 
+                                                    />
+                                                </div>
+
+                                                {/* New Price Slider */}
+                                                <div>
+                                                    <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                                                        <Bilingual en="New Price (P2)" si="නව මිල (P2)" />
+                                                        <span className="text-white font-bold font-mono">LKR {calcEd.p2}</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="100" max="3000" step="50" 
+                                                        value={calcEd.p2} 
+                                                        onChange={(e) => setCalcEd({ ...calcEd, p2: parseInt(e.target.value) })}
+                                                        className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500" 
+                                                    />
+                                                </div>
+
+                                                {/* Initial Qty Slider */}
+                                                <div>
+                                                    <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                                                        <Bilingual en="Initial Quantity (Q1)" si="ආරම්භක ප්‍රමාණය (Q1)" />
+                                                        <span className="text-white font-bold font-mono">{calcEd.q1} units</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="100" max="5000" step="100" 
+                                                        value={calcEd.q1} 
+                                                        onChange={(e) => setCalcEd({ ...calcEd, q1: parseInt(e.target.value) })}
+                                                        className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" 
+                                                    />
+                                                </div>
+
+                                                {/* New Qty Slider */}
+                                                <div>
+                                                    <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                                                        <Bilingual en="New Quantity (Q2)" si="නව ප්‍රමාණය (Q2)" />
+                                                        <span className="text-white font-bold font-mono">{calcEd.q2} units</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="100" max="5000" step="100" 
+                                                        value={calcEd.q2} 
+                                                        onChange={(e) => setCalcEd({ ...calcEd, q2: parseInt(e.target.value) })}
+                                                        className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" 
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Elasticity Results */}
+                                            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+                                                <div className="grid grid-cols-2 gap-2 text-center">
+                                                    <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800">
+                                                        <span className="text-[10px] text-slate-400 block"><Bilingual en="Elasticity Index" si="නම්‍යතා දර්ශකය" /></span>
+                                                        <span className="text-lg font-extrabold text-white font-mono">|Ed| = {edResults.absEd}</span>
+                                                    </div>
+                                                    <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800">
+                                                        <span className="text-[10px] text-slate-400 block"><Bilingual en="Demand Nature" si="ඉල්ලුමේ ස්වභාවය" /></span>
+                                                        <span className={`text-sm font-extrabold ${edResults.isElastic ? 'text-blue-400' : 'text-emerald-400'}`}>
+                                                            {edResults.isElastic ? (
+                                                                <Bilingual en="Elastic (|Ed| > 1)" si="නම්‍යශීලී ඉල්ලුම" />
+                                                            ) : (
+                                                                <Bilingual en="Inelastic (|Ed| < 1)" si="අනම්‍යශීලී ඉල්ලුම" />
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Revenue Calculations */}
+                                                <div className="flex justify-between items-center px-2 py-1 text-xs">
+                                                    <span className="text-slate-400"><Bilingual en="Original Revenue" si="පෙර මුළු ආදායම" />:</span>
+                                                    <span className="text-slate-200 font-mono font-bold">LKR {edResults.originalRev}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center px-2 py-1 text-xs">
+                                                    <span className="text-slate-400"><Bilingual en="New Revenue" si="නව මුළු ආදායම" />:</span>
+                                                    <span className="text-slate-200 font-mono font-bold">LKR {edResults.newRev}</span>
+                                                </div>
+
+                                                {/* Conditional Alert Box */}
+                                                <div className={`p-3 rounded-xl border text-xs leading-relaxed ${
+                                                    edResults.revChange > 0 
+                                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                                        : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                }`}>
+                                                    <div className="font-bold flex items-center space-x-1.5 mb-1">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
+                                                        <span>
+                                                            {edResults.revChange > 0 ? (
+                                                                <Bilingual en="Positive Revenue Impact" si="ධනාත්මක ආදායම් බලපෑම" />
+                                                            ) : (
+                                                                <Bilingual en="Negative Revenue Impact" si="සෘණාත්මක ආදායම් බලපෑම" />
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                    <Bilingual 
+                                                        en={`Total revenue shifted by LKR ${edResults.revChange.toLocaleString()}. ${
+                                                            edResults.revChange > 0 
+                                                                ? "Strong pricing power validated. The inelastic consumer core supports price maximization." 
+                                                                : "Price hike caused demand collapse. Lower price or inject augmented value first to reduce elasticity!"
+                                                        }`} 
+                                                        si={`මුළු ආදායම රු. ${edResults.revChange.toLocaleString()} කින් වෙනස් විය. ${
+                                                            edResults.revChange > 0 
+                                                                ? "මිල ඉහළ දැමීම සාර්ථකයි. පාරිභෝගිකයින් අනම්‍ය බැවින් මිල වැඩි කිරීමෙන් ආදායම ඉහළ යයි." 
+                                                                : "මිල වැඩි කිරීම නිසා ඉල්ලුම පහත වැටුණි. මිල අඩු කරන්න නැතහොත් වර්ධිත අගයක් එක් කරන්න!"
+                                                        }`}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Calculator 2: Tactical Bundling & Psychological Left-Digit Shift */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-4">
+                                            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                                                <h4 className="text-base font-bold text-white">
+                                                    <Bilingual en="2. Tactical Bundling & Psychological Bias Lab" si="2. උපායමාර්ගික පැකේජකරණය සහ මනෝවිද්‍යාත්මක මිලකරණය" />
+                                                </h4>
+                                                <span className="text-xs font-mono font-bold bg-slate-900 px-2.5 py-1 rounded-lg text-emerald-400 border border-slate-800">
+                                                    Left-Digit Bias
+                                                </span>
+                                            </div>
+
+                                            {/* Inputs */}
+                                            <div className="space-y-4 pt-2">
+                                                {/* Product A Base price */}
+                                                <div>
+                                                    <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                                                        <Bilingual en="Base Product A Price (e.g., Premium Pack)" si="මූලික භාණ්ඩයේ මිල (භාණ්ඩය A)" />
+                                                        <span className="text-white font-bold font-mono">LKR {calcBundle.pA}</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="1000" max="10000" step="250" 
+                                                        value={calcBundle.pA} 
+                                                        onChange={(e) => setCalcBundle({ ...calcBundle, pA: parseInt(e.target.value) })}
+                                                        className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500" 
+                                                    />
+                                                </div>
+
+                                                {/* Product B Base price */}
+                                                <div>
+                                                    <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                                                        <Bilingual en="Add-on Product B Price (e.g., Infuser)" si="අතිරේක භාණ්ඩයේ මිල (භාණ්ඩය B)" />
+                                                        <span className="text-white font-bold font-mono">LKR {calcBundle.pB}</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="500" max="5000" step="100" 
+                                                        value={calcBundle.pB} 
+                                                        onChange={(e) => setCalcBundle({ ...calcBundle, pB: parseInt(e.target.value) })}
+                                                        className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500" 
+                                                    />
+                                                </div>
+
+                                                {/* Discount % Slider */}
+                                                <div>
+                                                    <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                                                        <Bilingual en="Bundle Discount Percentage" si="පැකේජ වට්ටම් ප්‍රතිශතය" />
+                                                        <span className="text-white font-bold font-mono">{calcBundle.discount}%</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="0" max="50" step="5" 
+                                                        value={calcBundle.discount} 
+                                                        onChange={(e) => setCalcBundle({ ...calcBundle, discount: parseInt(e.target.value) })}
+                                                        className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" 
+                                                    />
+                                                </div>
+
+                                                {/* Psychological Left-Digit Toggle */}
+                                                <div className="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                                                    <div>
+                                                        <span className="text-xs font-bold text-white block">
+                                                            <Bilingual en="Apply Left-Digit Bias (.99/LKR 99 rounding)" si="වම්-ඉලක්කම් නැඹුරුව යොදන්න (99/999 මිලකරණය)" />
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-500 block">
+                                                            <Bilingual en="Lowers purchase resistance by altering leftmost digits." si="මිලෙහි මුල් ඉලක්කම් වෙනස් කිරීමෙන් පාරිභෝගිකයාගේ මිල බිය නැති කරයි." />
+                                                        </span>
+                                                    </div>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={calcBundle.useFractional} 
+                                                        onChange={(e) => setCalcBundle({ ...calcBundle, useFractional: e.target.checked })}
+                                                        className="w-4 h-4 text-brand-600 bg-slate-800 border-slate-700 rounded focus:ring-brand-500 animate-none" 
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Output Simulation Display */}
+                                            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+                                                <div className="flex justify-between text-xs pb-1">
+                                                    <span className="text-slate-400"><Bilingual en="Combined Separate Price" si="වෙන වෙනම මිලදී ගතහොත් එකතුව" />:</span>
+                                                    <span className="text-slate-300 font-mono font-bold">LKR {bundleResults.standardSum}</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs pb-1">
+                                                    <span className="text-slate-400"><Bilingual en="Standard Discounted Price" si="සාමාන්‍ය වට්ටම් සහිත මිල" />:</span>
+                                                    <span className="text-slate-300 font-mono">LKR {bundleResults.discountedRaw}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center border-t border-slate-800 pt-2 pb-1 text-sm">
+                                                    <span className="text-white font-bold"><Bilingual en="Final Simulated Bundle Price" si="අවසාන පැකේජ මිල" />:</span>
+                                                    <span className="text-emerald-400 font-mono font-extrabold text-base">LKR {bundleResults.finalPrice}</span>
+                                                </div>
+
+                                                {/* Left Digit Shift Badge */}
+                                                {bundleResults.hasLeftDigitShift ? (
+                                                    <div className="p-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-xs leading-relaxed">
+                                                        <span className="font-bold block">✔ Left-Digit Shift Active!</span>
+                                                        <Bilingual 
+                                                            en={`The price shifted down to trigger a left-digit barrier reduction. The consumer perceives LKR ${bundleResults.finalPrice} as closer to the lower tier compared to LKR ${bundleResults.discountedRaw}.`} 
+                                                            si={`වම්-ඉලක්කම් මනෝවිද්‍යාත්මක නැඹුරුව සාර්ථකයි. පාරිභෝගික මනස රු. ${bundleResults.finalPrice} මිල සලකන්නේ ඊට වඩා බෙහෙවින් අඩු මට්ටමක මිලක් ලෙසයි.`}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-3 bg-slate-950/60 text-slate-500 border border-slate-900 rounded-xl text-xs">
+                                                        <Bilingual en="No left-digit bias applied. Base pricing model operates on simple numbers." si="වම්-ඉලක්කම් නැඹුරුව සක්‍රිය කර නොමැත. මිල සෘජුවම වට කර ඇත." />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 4: SYSTEM SIMULATION 1 (LAYER ARCHITECT) */}
+                            {activeTab === 4 && (
+                                <div className="space-y-6">
+                                    <div className="glass-panel p-6 rounded-3xl border-l-4 border-brand-500 mb-6">
+                                        <h3 className="text-xl font-extrabold text-white">
+                                            <Bilingual en="🖥️ System Simulation 1: Total Product Concept Layer Architect" si="🖥️ ක්‍රමවේද අත්හදාබැලීම 1: සමස්ත නිෂ්පාදන ස්ථර සැලසුම්කරණය" />
+                                        </h3>
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            <Bilingual en="Toggle product layers dynamically to engineer commodity-bypass ecosystems." si="නිෂ්පාදන ස්ථර වෙනස් කරමින් අගය වැඩි දියුණු කරන්න. වෙනස්කම් සජීවීව නිරීක්ෂණය කරන්න." />
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        
+                                        {/* Configuration Side panel */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-6">
+                                            {/* Industry selector */}
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 block mb-2"><Bilingual en="Select Focus Industry:" si="අදාළ කර්මාන්තය තෝරන්න:" /></label>
+                                                <select 
+                                                    value={sim1Industry}
+                                                    onChange={(e) => setSim1Industry(e.target.value)}
+                                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-brand-500"
+                                                >
+                                                    <option value="tea">Ceylon Organic Tea Range (තේ කර්මාන්තය)</option>
+                                                    <option value="solar">Solar Smart Inverters (සූර්ය බලශක්තිය)</option>
+                                                    <option value="wellness">Boutique Wellness Retreats (සුවතා සංචාරක කර්මාන්තය)</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Product Layers Toggle Taps */}
+                                            <div className="space-y-3">
+                                                <label className="text-xs font-bold text-slate-400 block"><Bilingual en="Construct Layers:" si="නිෂ්පාදන ස්ථර එකතු කරන්න:" /></label>
+                                                
+                                                {/* Core Layer - Non-negotiable */}
+                                                <div className="p-3 bg-brand-500/10 border border-brand-500/20 rounded-xl flex items-center justify-between">
+                                                    <div>
+                                                        <span className="text-xs font-bold text-white block">
+                                                            <Bilingual en="Layer 1: Core Benefit" si="ස්ථරය 1: මූලික ප්‍රතිලාභය" />
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-500 italic"><Bilingual en="Fundamental core need." si="මූලික අවශ්‍යතාවය සපුරාලයි." /></span>
+                                                    </div>
+                                                    <span className="text-xs text-brand-400 font-extrabold uppercase"><Bilingual en="Activated" si="සක්‍රියයි" /></span>
+                                                </div>
+
+                                                {/* Actual Layer */}
+                                                <button 
+                                                    onClick={() => setSim1Layers({ ...sim1Layers, actual: !sim1Layers.actual })}
+                                                    className={`w-full p-3 rounded-xl flex items-center justify-between border text-left transition ${
+                                                        sim1Layers.actual 
+                                                            ? 'bg-emerald-500/15 border-brand-500/30 text-white' 
+                                                            : 'bg-slate-900/60 border-slate-800 text-slate-500'
+                                                    }`}
+                                                >
+                                                    <div>
+                                                        <span className="text-xs font-bold block">
+                                                            <Bilingual en="Layer 2: Actual Product" si="ස්ථරය 2: සැබෑ නිෂ්පාදනය" />
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 italic"><Bilingual en="Quality, Packaging, Brand." si="ගුණාත්මකබව, ඇසුරුම්, සන්නාමය." /></span>
+                                                    </div>
+                                                    <span className="text-xs font-extrabold uppercase">
+                                                        {sim1Layers.actual ? <Bilingual en="Active" si="සක්‍රියයි" /> : <Bilingual en="Deploy" si="එක් කරන්න" />}
+                                                    </span>
+                                                </button>
+
+                                                {/* Augmented Layer */}
+                                                <button 
+                                                    onClick={() => setSim1Layers({ ...sim1Layers, augmented: !sim1Layers.augmented })}
+                                                    className={`w-full p-3 rounded-xl flex items-center justify-between border text-left transition ${
+                                                        sim1Layers.augmented 
+                                                            ? 'bg-emerald-500/15 border-brand-500/30 text-white' 
+                                                            : 'bg-slate-900/60 border-slate-800 text-slate-500'
+                                                    }`}
+                                                    disabled={!sim1Layers.actual}
+                                                >
+                                                    <div>
+                                                        <span className="text-xs font-bold block">
+                                                            <Bilingual en="Layer 3: Augmented Product" si="ස්ථරය 3: වර්ධිත නිෂ්පාදනය" />
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 italic"><Bilingual en="Warranty, Tracing, App." si="වගකීම්, සොයාගැනීමේ පහසුකම්, සේවා." /></span>
+                                                    </div>
+                                                    <span className="text-xs font-extrabold uppercase">
+                                                        {!sim1Layers.actual ? (
+                                                            <Bilingual en="Locked" si="අගුළු දමා ඇත" />
+                                                        ) : sim1Layers.augmented ? (
+                                                            <Bilingual en="Active" si="සක්‍රියයි" />
+                                                        ) : (
+                                                            <Bilingual en="Deploy" si="එක් කරන්න" />
+                                                        )}
+                                                    </span>
+                                                </button>
+                                                {!sim1Layers.actual && (
+                                                    <span className="text-[9px] text-red-400 block italic"><Bilingual en="*Activate Layer 2 to unlock Layer 3." si="*3 වන ස්ථරය (වර්ධිත) සක්‍රිය කිරීමට 2 වන ස්ථරය (සැබෑ) සක්‍රිය කරන්න." /></span>
+                                                )}
+                                            </div>
+
+                                            {/* Deploy Button */}
+                                            <button
+                                                onClick={handleSim1Deploy}
+                                                className="w-full bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold py-3 px-4 rounded-xl text-xs tracking-wider uppercase transition shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                                            >
+                                                <Bilingual en="Compile & Test Product" si="නිෂ්පාදන සැකැස්ම පරීක්ෂා කරන්න" />
+                                            </button>
+                                        </div>
+
+                                        {/* Dynamic CSS Visualizer */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-slate-800 flex flex-col items-center justify-center min-h-[350px] relative">
+                                            {sim1Processing ? (
+                                                <div className="text-center space-y-3">
+                                                    <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                                    <span className="text-xs font-semibold text-slate-400 block"><Bilingual en="Processing System State..." si="ක්‍රියාවලිය සිදුවෙමින් පවතී..." /></span>
+                                                </div>
+                                            ) : (
+                                                <div className="w-full text-center space-y-6">
+                                                    <span className="text-xs text-slate-400 font-bold uppercase"><Bilingual en="Concentric Architecture Map" si="සමකේන්ද්‍රික නිෂ්පාදන සැකැස්ම" /></span>
+                                                    
+                                                    {/* Concentric Circle Visualizer */}
+                                                    <div className="relative w-64 h-64 mx-auto flex items-center justify-center rounded-full border border-slate-800 bg-slate-950/60 shadow-inner">
+                                                        
+                                                        {/* Layer 3 Ring: Augmented */}
+                                                        <div className={`absolute inset-2 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+                                                            sim1Layers.augmented 
+                                                                ? 'border-dashed border-emerald-500/60 bg-emerald-500/5 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
+                                                                : 'border-slate-900'
+                                                        }`}>
+                                                            {/* Layer 2 Ring: Actual */}
+                                                            <div className={`absolute inset-8 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+                                                                sim1Layers.actual 
+                                                                    ? 'border-blue-500/60 bg-blue-500/5 shadow-[0_0_20px_rgba(59,130,246,0.1)]' 
+                                                                    : 'border-slate-900'
+                                                            }`}>
+                                                                {/* Layer 1 Inner Sphere: Core */}
+                                                                <div className="w-24 h-24 rounded-full bg-slate-900 border border-slate-800 flex flex-col items-center justify-center p-2 shadow-lg">
+                                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest"><Bilingual en="Core Benefit" si="මූලික අගය" /></span>
+                                                                    <span className="text-[8px] text-slate-500 text-center font-semibold line-clamp-2 mt-1">
+                                                                        {sim1Industry === 'tea' && (langMode === 'en' ? "Hydration & Calm" : "පිපාසය හා සන්සුන් බව")}
+                                                                        {sim1Industry === 'solar' && (langMode === 'en' ? "Clean electricity" : "පිරිසිදු විදුලි බලය")}
+                                                                        {sim1Industry === 'wellness' && (langMode === 'en' ? "Stress reduction" : "මානසික සුවතාවය")}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Floating badges showing current active status */}
+                                                        {sim1Layers.actual && (
+                                                            <span className="absolute top-2 right-2 text-[8px] bg-blue-500/25 border border-blue-500/40 px-2 py-0.5 rounded text-blue-300">
+                                                                <Bilingual en="Actual Ready" si="සැබෑ නිෂ්පාදනය සක්‍රියයි" />
+                                                            </span>
+                                                        )}
+                                                        {sim1Layers.augmented && (
+                                                            <span className="absolute bottom-2 left-2 text-[8px] bg-emerald-500/25 border border-emerald-500/40 px-2 py-0.5 rounded text-emerald-300">
+                                                                <Bilingual en="Augmented Ready" si="වර්ධිතය සක්‍රියයි" />
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="text-xs text-slate-500 italic">
+                                                        <Bilingual en="Visual updates occur according to selected layers." si="ස්ථර සක්‍රිය වන විට සැකැස්ම සජීවීව වෙනස් වේ." />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Output Analysis Panel */}
+                                        <div className="glass-panel p-6 rounded-3xl border border-slate-800 flex flex-col justify-between">
+                                            <div>
+                                                <h4 className="text-sm font-bold text-slate-200 border-b border-slate-800/80 pb-3 mb-4">
+                                                    <Bilingual en="Diagnostic Output Summary" si="නිෂ්පාදන පරීක්ෂණ දත්ත සාරාංශය" />
+                                                </h4>
+
+                                                {sim1Output ? (
+                                                    <div className="space-y-4">
+                                                        {/* Margin Indicator */}
+                                                        <div>
+                                                            <div className="flex justify-between text-xs mb-1">
+                                                                <span className="text-slate-400"><Bilingual en="Calculated Profit Margin" si="ගණනය කළ ලාභ ආන්තිකය" />:</span>
+                                                                <span className="text-emerald-400 font-extrabold font-mono text-sm">{sim1Output.margin}%</span>
+                                                            </div>
+                                                            <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                                                                <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${sim1Output.margin}%` }}></div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Elasticity Metric */}
+                                                        <div>
+                                                            <div className="flex justify-between text-xs mb-1">
+                                                                <span className="text-slate-400"><Bilingual en="Estimated Brand Elasticity" si="අපේක්ෂිත සන්නාම මිල නම්‍යතාවය" />:</span>
+                                                                <span className="text-blue-400 font-extrabold font-mono text-sm">|Ed| = {sim1Output.elasticity}</span>
+                                                            </div>
+                                                            <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-900 text-xs">
+                                                                {sim1Output.elasticity > 1 ? (
+                                                                    <span className="text-red-400 font-semibold block"><Bilingual en="Highly Elastic (Vulnerable to copycats)" si="අධික නම්‍යශීලී (මිල තරඟකාරිත්වයට පහසුවෙන් ගොදුරු වේ)" /></span>
+                                                                ) : (
+                                                                    <span className="text-emerald-400 font-semibold block"><Bilingual en="Strong Inelasticity (High pricing defense)" si="ශක්තිමත් අනම්‍යශීලී බව (ඉහළ මිල ආරක්ෂණ හැකියාව)" /></span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Strategic Positioning Category */}
+                                                        <div className="p-3 bg-slate-900 rounded-2xl border border-slate-800">
+                                                            <span className="text-[10px] text-slate-500 block uppercase"><Bilingual en="Engineered Market Position" si="වෙළඳපල ස්ථානගත වීම" /></span>
+                                                            <span className="text-xs font-bold text-white mt-1 block">
+                                                                {langMode === 'en' ? sim1Output.positioningEn : sim1Output.positioningSi}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Estimated Retention Rate */}
+                                                        <div className="flex justify-between items-center text-xs bg-slate-900 p-3 rounded-xl border border-slate-800">
+                                                            <span className="text-slate-400"><Bilingual en="Est. Customer Retention" si="පාරිභෝගික රඳවා ගැනීමේ ප්‍රතිශතය" /></span>
+                                                            <span className="text-white font-mono font-bold">{sim1Output.retention}</span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-12 text-slate-500 text-xs italic">
+                                                        <Bilingual en="Configure product layers and click 'Compile' to see metrics." si="කරුණාකර ස්ථර තෝරා 'නිෂ්පාදන සැකැස්ම පරීක්ෂා කරන්න' බොත්තම ඔබන්න." />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 5: SYSTEM SIMULATION 2 (THE CASCADE) */}
+                            {activeTab === 5 && (
+                                <div className="space-y-6">
+                                    <div className="glass-panel p-6 rounded-3xl border-l-4 border-blue-500 mb-6">
+                                        <h3 className="text-xl font-extrabold text-white">
+                                            <Bilingual en="🎯 System Simulation 2: Strategic Pricing Cascade" si="🎯 ක්‍රමවේද අත්හදාබැලීම 2: උපායමාර්ගික මිලකරණ සහ ස්ථානගත කිරීමේ ප්‍රවාහය" />
+                                        </h3>
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            <Bilingual en="Toggle a high-level corporate strategy to cascade decisions into operational attributes." si="උපායමාර්ගික මිලකරණ තේරීමක් සිදුකර, එය භෞතික නිෂ්පාදනයට සහ මූල්‍ය දර්ශක වලට බලපාන අයුරු නිරීක්ෂණය කරන්න." />
+                                        </p>
+                                    </div>
+
+                                    {/* Strategy Selectors */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <button 
+                                            onClick={() => setSim2Strategy('skimming')}
+                                            className={`p-4 rounded-2xl border text-left transition ${
+                                                sim2Strategy === 'skimming' 
+                                                    ? 'bg-blue-500/10 border-blue-500 text-blue-400 shadow-md' 
+                                                    : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-400'
+                                            }`}
+                                        >
+                                            <span className="text-xs font-mono block uppercase">Strategy A</span>
+                                            <span className="text-sm font-bold block mt-1">
+                                                <Bilingual en="High-End Price Skimming" si="මිල උරාගැනීම (Premium Skimming)" />
+                                            </span>
+                                        </button>
+
+                                        <button 
+                                            onClick={() => setSim2Strategy('penetration')}
+                                            className={`p-4 rounded-2xl border text-left transition ${
+                                                sim2Strategy === 'penetration' 
+                                                    ? 'bg-blue-500/10 border-blue-500 text-blue-400 shadow-md' 
+                                                    : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-400'
+                                            }`}
+                                        >
+                                            <span className="text-xs font-mono block uppercase">Strategy B</span>
+                                            <span className="text-sm font-bold block mt-1">
+                                                <Bilingual en="Mass Market Penetration" si="වෙළඳපල ආක්‍රමණය (Market Penetration)" />
+                                            </span>
+                                        </button>
+
+                                        <button 
+                                            onClick={() => setSim2Strategy('tiering')}
+                                            className={`p-4 rounded-2xl border text-left transition ${
+                                                sim2Strategy === 'tiering' 
+                                                    ? 'bg-blue-500/10 border-blue-500 text-blue-400 shadow-md' 
+                                                    : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-400'
+                                            }`}
+                                        >
+                                            <span className="text-xs font-mono block uppercase">Strategy C</span>
+                                            <span className="text-sm font-bold block mt-1">
+                                                <Bilingual en="Value-Added Price Tiering" si="වටිනාකම මත පදනම් වූ මිල මට්ටම් කිරීම" />
+                                            </span>
+                                        </button>
+                                    </div>
+
+                                    {/* Cascade Display Flow */}
+                                    <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-4">
+                                        <span className="text-xs text-slate-500 font-extrabold uppercase block tracking-wider"><Bilingual en="Interactive Waterfall Model" si="අන්තර්ක්‍රියාකාරී තීරණ ප්‍රවාහ සටහන" /></span>
+                                        
+                                        {/* Tier 1 */}
+                                        <div className="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 relative animate-none">
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-l-2xl"></div>
+                                            <span className="text-[10px] text-blue-400 font-extrabold uppercase font-mono tracking-widest">
+                                                <Bilingual en="Level 1: Strategic Alignment" si="පියවර 1: උපායමාර්ගික පෙළගැස්ම" />
+                                            </span>
+                                            <h4 className="text-sm font-bold text-white mt-1">
+                                                {sim2Strategy === 'skimming' && <Bilingual en="Recover high product design overheads rapidly by commanding premiums from early innovators." si="මිල ගැන නොසලකන පාරිභෝගිකයින්ගෙන් ඉහළ ලාභ ලබාගෙන පර්යේෂණ පිරිවැය ඉක්මනින් පියවා ගැනීම." />}
+                                                {sim2Strategy === 'penetration' && <Bilingual en="Construct scale barriers to lock out potential rivals and secure major market share." si="තරඟකරුවන්ට වෙළඳපලට ඇතුල් වීමට නොහැකි වන පරිදි අඩු මිලක් මඟින් විශාල වෙළඳපල කොටසක් අත්පත් කර ගැනීම." />}
+                                                {sim2Strategy === 'tiering' && <Bilingual en="Extract maximum consumer surplus across diverse farmer budgets using anchored offers." si="මිල මට්ටම් මඟින් විවිධ පාරිභෝගික මට්ටම් වල ඇති මුළු පාරිභෝගික අතිරික්තයම ලබා ගැනීම." />}
+                                            </h4>
+                                        </div>
+
+                                        {/* Tier 2 */}
+                                        <div className="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 relative animate-none">
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-500 rounded-l-2xl"></div>
+                                            <span className="text-[10px] text-emerald-400 font-extrabold uppercase font-mono tracking-widest">
+                                                <Bilingual en="Level 2: Product Attribute Adjustments" si="පියවර 2: නිෂ්පාදන ලක්ෂණ ගැලපීම" />
+                                            </span>
+                                            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                                {sim2Strategy === 'skimming' && <Bilingual en="Augmented focus: Extended warranties, dedicated support, hand-finished wooden canisters, traceable QR tags." si="වර්ධිත ස්ථරයට වැඩි ඉඩක්: වසර 5ක දීර්ඝ වගකීම් සහ අත්කම් පෙට්ටි භාවිතය." />}
+                                                {sim2Strategy === 'penetration' && <Bilingual en="No-frills functional focus: Minimalist recycled cardboard packaging, high utility, and absolute zero complex customizations." si="සම්මත මූලික නිමාව (Actual Product): වියදම් පාලනය කිරීම සඳහා සරල ඇසුරුම් සහ ඉහළ ප්‍රයෝජනවත් බව කෙරෙහි අවධානය යොමු කිරීම." />}
+                                                {sim2Strategy === 'tiering' && <Bilingual en="Structured bundles: Entry bulk bag, Standard canister with QR tracing, and Luxury wooden gift chest." si="මිශ්‍ර පැකේජකරණය: සාමාන්‍ය බෑග්, සම්මත ඇසුරුම් සහ ඉහළ වටිනාකම් සහිත තෑගි එකතුවක් ලෙස විකල්ප ලබා දීම." />}
+                                            </p>
+                                        </div>
+
+                                        {/* Tier 3 */}
+                                        <div className="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 relative animate-none">
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-yellow-500 rounded-l-2xl"></div>
+                                            <span className="text-[10px] text-yellow-500 font-extrabold uppercase font-mono tracking-widest">
+                                                <Bilingual en="Level 3: Operational Outcomes" si="පියවර 3: මෙහෙයුම් මූල්‍ය ප්‍රතිඵල" />
+                                            </span>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                                                <div className="bg-slate-950 p-2 rounded-xl text-center border border-slate-850">
+                                                    <span className="text-[9px] text-slate-500 block"><Bilingual en="Est. Margin" si="ලාභ ආන්තිකය" /></span>
+                                                    <span className="text-xs font-bold text-white font-mono">
+                                                        {sim2Strategy === 'skimming' && "50% - 65%"}
+                                                        {sim2Strategy === 'penetration' && "5% - 10%"}
+                                                        {sim2Strategy === 'tiering' && "30% - 45%"}
+                                                    </span>
+                                                </div>
+                                                <div className="bg-slate-950 p-2 rounded-xl text-center border border-slate-850">
+                                                    <span className="text-[9px] text-slate-500 block"><Bilingual en="Target Vol" si="ඉලක්කගත පරිමාව" /></span>
+                                                    <span className="text-xs font-bold text-white font-mono">
+                                                        {sim2Strategy === 'skimming' && (langMode === 'en' ? "Low / Niche" : "අඩු / සීමිත")}
+                                                        {sim2Strategy === 'penetration' && (langMode === 'en' ? "Ultra-High" : "ඉතා ඉහළ")}
+                                                        {sim2Strategy === 'tiering' && (langMode === 'en' ? "Balanced" : "සමබර")}
+                                                    </span>
+                                                </div>
+                                                <div className="bg-slate-950 p-2 rounded-xl text-center border border-slate-850">
+                                                    <span className="text-[9px] text-slate-500 block"><Bilingual en="Elasticity (Ed)" si="මිල නම්‍යතාවය" /></span>
+                                                    <span className="text-xs font-bold text-white font-mono">
+                                                        {sim2Strategy === 'skimming' && "|Ed| = 0.45"}
+                                                        {sim2Strategy === 'penetration' && "|Ed| = 2.45"}
+                                                        {sim2Strategy === 'tiering' && (langMode === 'en' ? "Variable" : "විවිධ")}
+                                                    </span>
+                                                </div>
+                                                <div className="bg-slate-950 p-2 rounded-xl text-center border border-slate-850">
+                                                    <span className="text-[9px] text-slate-500 block"><Bilingual en="Risk Profile" si="අවදානම් ස්වභාවය" /></span>
+                                                    <span className="text-xs font-bold text-white font-mono">
+                                                        {sim2Strategy === 'skimming' && (langMode === 'en' ? "High / Cloning" : "ඉහළ අනුකරණ")}
+                                                        {sim2Strategy === 'penetration' && (langMode === 'en' ? "Low entry threat" : "අඩු තරඟකාරී")}
+                                                        {sim2Strategy === 'tiering' && (langMode === 'en' ? "Optimal" : "හිතකර")}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 6: SYSTEM SIMULATION 3 (WORKFLOW SIM) */}
+                            {activeTab === 6 && (
+                                <div className="space-y-6">
+                                    <div className="glass-panel p-6 rounded-3xl border-l-4 border-emerald-500 mb-6">
+                                        <h3 className="text-xl font-extrabold text-white">
+                                            <Bilingual en="🔄 System Simulation 3: Lifecycle Workflow Comparison" si="🔄 ක්‍රමවේද අත්හදාබැලීම 3: නිෂ්පාදන ආයු කාල කාර්ය ප්‍රවාහ සැසඳීම" />
+                                        </h3>
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            <Bilingual en="Compare the traditional static Product Lifecycle against the modern Agile continuous augmentation loop." si="සාම්ප්‍රදායික රේඛීය නිෂ්පාදන ආයු කාල චක්‍රය (PLC) සහ නූතන කඩිසර (Agile) වර්ධිත චක්‍රය එකිනෙක සසඳා බලන්න." />
+                                        </p>
+                                    </div>
+
+                                    {/* Toggle buttons */}
+                                    <div className="flex space-x-2 bg-slate-900/60 p-1 rounded-xl border border-slate-800 w-fit">
+                                        <button 
+                                            onClick={() => setSim3Workflow('linear')}
+                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+                                                sim3Workflow === 'linear' ? 'bg-emerald-500 text-slate-950' : 'text-slate-400'
+                                            }`}
+                                        >
+                                            <Bilingual en="Linear PLC Model" si="රේඛීය PLC ආකෘතිය" />
+                                        </button>
+                                        <button 
+                                            onClick={() => setSim3Workflow('agile')}
+                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+                                                sim3Workflow === 'agile' ? 'bg-emerald-500 text-slate-950' : 'text-slate-400'
+                                            }`}
+                                        >
+                                            <Bilingual en="Agile Innovation Loop" si="කඩිසර වර්ධන චක්‍රය" />
+                                        </button>
+                                    </div>
+
+                                    {/* Workflow view panel */}
+                                    {sim3Workflow === 'linear' ? (
+                                        <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-6">
+                                            <div className="border-b border-slate-800 pb-3">
+                                                <h4 className="text-base font-bold text-white">
+                                                    <Bilingual en="Traditional Linear Product Lifecycle (PLC)" si="සාම්ප්‍රදායික රේඛීය නිෂ්පාදන ආයු කාල චක්‍රය (PLC)" />
+                                                </h4>
+                                                <span className="text-xs text-slate-500 block mt-1">
+                                                    <Bilingual en="Strict sequential stages leading inevitably to commoditization and decline." si="අනුක්‍රමික පියවර ඔස්සේ ගොස් අවසානයේ නිෂ්පාදනයේ පරිහානියෙන් අවසන් වන සාම්ප්‍රදායික රටාව." />
+                                                </span>
+                                            </div>
+
+                                            {/* Process Steps Visual */}
+                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl text-center">
+                                                    <span className="text-xs font-bold text-emerald-400 block mb-1"><Bilingual en="1. Introduction" si="1. හඳුන්වාදීම" /></span>
+                                                    <Bilingual en="High investment, negative margins, low buyer awareness." si="අධික හඳුන්වාදීමේ පිරිවැය, අඩු ලාභය සහ සීමිත පාරිභෝගික දැනුවත්භාවය." />
+                                                </div>
+                                                <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl text-center">
+                                                    <span className="text-xs font-bold text-emerald-400 block mb-1"><Bilingual en="2. Growth" si="2. වර්ධනය" /></span>
+                                                    <Bilingual en="Competitors duplicate features, sales volume expands." si="තරඟකරුවන් නිෂ්පාදනය අනුකරණය කරයි. විකුණුම් වේගයෙන් වැඩිවේ." />
+                                                </div>
+                                                <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl text-center">
+                                                    <span className="text-xs font-bold text-emerald-400 block mb-1"><Bilingual en="3. Maturity" si="3. පරිණතභාවය" /></span>
+                                                    <Bilingual en="Intense pricing wars begin. Margins contract to standard bulk rates." si="දැඩි මිල සටන් ඇරඹේ. ලාභය සීමා වේ. සාමාන්‍ය වෙළඳ භාණ්ඩ මට්ටමට වැටේ." />
+                                                </div>
+                                                <div className="p-4 bg-slate-950/60 border border-red-500/20 rounded-2xl text-center">
+                                                    <span className="text-xs font-bold text-red-400 block mb-1"><Bilingual en="4. Decline" si="4. පරිහානිය" /></span>
+                                                    <Bilingual en="Commodity Trap. High substitutability forces brand death." si="නිෂ්පාදනය අභාවයට යයි. විකල්ප බහුල වීම නිසා සන්නාමය වෙළඳපලෙන් ඉවත් වේ." />
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl text-xs">
+                                                <span className="font-bold block mb-1"><Bilingual en="⚠️ Decline Stage Consequence:" si="⚠️ පරිහානි අවධියේ ගැටළුව:" /></span>
+                                                <Bilingual 
+                                                    en="Under a traditional linear model, if core benefits are not continuously augmented, competitor mimicry collapses margins, raising elasticity to absolute levels." 
+                                                    si="රේඛීය ක්‍රියාවලිය යටතේ නිෂ්පාදන වර්ධනය නොකරන්නේ නම්, තරඟකරුවන් පහසුවෙන් එය අනුකරණය කර මිල නම්‍යතාවය ඉහළ නංවා සන්නාමය විනාශ කරයි."
+                                                />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-6">
+                                            <div className="border-b border-slate-800 pb-3">
+                                                <h4 className="text-base font-bold text-white">
+                                                    <Bilingual en="Agile Continuous Value Augmentation Loop" si="කඩිසර අඛණ්ඩ වර්ධිත අගය පරිණාම චක්‍රය" />
+                                                </h4>
+                                                <span className="text-xs text-slate-500 block mt-1">
+                                                    <Bilingual en="Evading decline stages through continuous user feedback loops and augmented additions." si="කඩිසර ප්‍රතිපෝෂණ මඟින් නිෂ්පාදනයේ වර්ධිත ස්ථර නිරන්තරයෙන් යාවත්කාලීන කරමින් පරිහානි අවධිය මඟ හැරීම." />
+                                                </span>
+                                            </div>
+
+                                            {/* Circular Loop Visual */}
+                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center animate-none">
+                                                    <span className="text-xs font-bold text-emerald-400 block mb-1"><Bilingual en="A. Deploy Core MVP" si="A. මූලික MVP නිෂ්පාදනය" /></span>
+                                                    <Bilingual en="Deploy core functional value rapidly into the market." si="පාරිභෝගිකයාගේ ප්‍රධාන අවශ්‍යතාවය සඳහා මූලික නිෂ්පාදනයක් වහාම වෙළඳපලට දැමීම." />
+                                                </div>
+                                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center animate-none">
+                                                    <span className="text-xs font-bold text-emerald-400 block mb-1"><Bilingual en="B. Track Friction" si="B. දෝෂ හඳුනා ගැනීම" /></span>
+                                                    <Bilingual en="Gather real-world utility metrics using QR support tools." si="QR කේත සහ සේවා සහය මඟින් පාරිභෝගිකයාගේ භාවිතයේ ගැටළු හඳුනා ගැනීම." />
+                                                </div>
+                                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center animate-none">
+                                                    <span className="text-xs font-bold text-emerald-400 block mb-1"><Bilingual en="C. Inject Augmentation" si="C. වර්ධිත අගය එක් කිරීම" /></span>
+                                                    <Bilingual en="Inject subscription models or personalized services." si="අලුත්ම සේවා, වාරික ගෙවීමේ ක්‍රම හෝ වගකීම් සහතික එක් කිරීම." />
+                                                </div>
+                                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center animate-none">
+                                                    <span className="text-xs font-bold text-emerald-400 block mb-1"><Bilingual en="D. Command Premium" si="D. වාරික මිලකරණය" /></span>
+                                                    <Bilingual en="Establish strong price inelasticity via differentiation." si="තරඟකාරිත්වය අබිබවා යමින් නිරන්තරයෙන් ඉහළ මිලක් සහ අනම්‍යශීලී බවක් පවත්වා ගැනීම." />
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-2xl text-xs">
+                                                <span className="font-bold block mb-1"><Bilingual en="✔ The Agile Outcome:" si="✔ කඩිසර ක්‍රමයේ ප්‍රතිඵලය:" /></span>
+                                                <Bilingual 
+                                                    en="Continuous non-physical value additions safeguard the brand against imitation, keeping demand highly inelastic and premium." 
+                                                    si="නිරන්තරයෙන් භෞතික නොවන සේවාවන් (Augmented values) එක් කිරීම මඟින් නිෂ්පාදනය අනුකරණය කිරීමට ඇති ඉඩකඩ නැති කර මිල ස්ථාවරව ඉහළ මට්ටමක තබා ගත හැකිය."
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* TAB 7: BREAKOUT ROOMS */}
+                            {activeTab === 7 && (
+                                <div className="space-y-6">
+                                    <div className="glass-panel p-6 rounded-3xl border-l-4 border-emerald-500 mb-6">
+                                        <h3 className="text-xl font-extrabold text-white">
+                                            <Bilingual en="💬 Classroom Breakout Rooms: Provocative Prompts" si="💬 දේශන කාමර සාකච්ඡා මාතෘකා: ප්‍රකෝපකාරී ප්‍රශ්න" />
+                                        </h3>
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            <Bilingual en="Review technical discussion topics. Click any prompt to reveal the facilitator guide." si="දේශන කාමර සාකච්ඡා සඳහා සකස් කරන ලද සාකච්ඡා මාතෘකා. මාර්ගෝපදේශය බැලීමට ප්‍රශ්නය මත ක්ලික් කරන්න." />
+                                        </p>
+                                    </div>
+
+                                    {/* Prompts list */}
+                                    <div className="space-y-4">
+                                        {[
+                                            {
+                                                q_en: "1. How can a generic commodity builder (such as loose tea or raw rubber) build an Augmented Product layer to command a 100% price premium?",
+                                                q_si: "1. තොග වශයෙන් තේ හෝ රබර් අලෙවි කරන දේශීය නිෂ්පාදකයෙකුට, 100% ක මිල වාරිකයක් (Premium price) ලබා ගැනීම සඳහා වර්ධිත නිෂ්පාදන ස්ථරයක් (Augmented Product layer) සකස් කරන්නේ කෙසේද?",
+                                                bp_en: "Focus on: block chain farm-to-cup origin tracing via QR codes, localized luxury craft packaging partnerships, carbon-neutral logistics, and exclusive subscription-based distribution setups.",
+                                                bp_si: "බ්ලොක්චේන් තාක්ෂණය හරහා වගා තොරතුරු සොයා ගැනීමේ QR කේත භාවිතය, දේශීය ලී කැටයම් පෙට්ටි භාවිතය, කාබන් සන්තුලන සහතිකකරණය සහ විශේෂ පාරිභෝගික සමාජ සේවා සැපයීම."
+                                            },
+                                            {
+                                                q_en: "2. If a firm establishes demand elasticity as |Ed| = 0.45, and increases prices by 25%, what are the immediate revenue gains vs. long-term risks?",
+                                                q_si: "2. ආයතනයක මිල නම්‍යතාවය |Ed| = 0.45 ලෙස ගණනය කර ඇති විට ඔවුන් මිල 25% කින් වැඩි කළහොත් ලැබෙන ආදායම සහ ඇතිවන දිගුකාලීන අවදානම් මොනවාද?",
+                                                bp_en: "Short-term: Revenue expands because demand change is fractional. Long-term risks: Invites lower-price clone products, alienates brand loyalists, and decreases barrier to entry.",
+                                                bp_si: "කෙටි කාලීනව: ගැනුම්කරුවන් අඩුවෙන් ප්‍රතිචාර දක්වන බැවින් ආදායම සීඝ්‍රයෙන් ඉහළ යයි. දිගු කාලීනව: ඉහළ ලාභය දැක තරඟකරුවන් ආදේශක භාණ්ඩ සමඟ වෙළඳපලට කඩා වැදීමේ දැඩි අවදානමක් ඇත."
+                                            },
+                                            {
+                                                q_en: "3. What are the severe psychological brand risks of over-relying on promotional discounts to drive short-term sales volume?",
+                                                q_si: "3. ප්‍රිමියම් සන්නාමයක් නිරන්තරයෙන් වට්ටම් (Discounts) ලබා දීම මත පමණක් පඳනම් පැවතීමෙන් ඇතිවන මනෝවිද්‍යාත්මක සහ සන්නාම අවදානම් මොනවාද?",
+                                                bp_en: "Permanently resets consumer reference price anchors. The brand status-symbol collapses, shifting target groups from premium value-seekers to deal-seekers.",
+                                                bp_si: "පාරිභෝගිකයාගේ සිතේ ඇති ගුණාත්මක ප්‍රතිරූපය විනාශ වේ. වට්ටම් සහිත මිල සැබෑ මිල ලෙස පාරිභෝගිකයා සලකන අතර, සන්නාමයේ වාරික වටිනාකම නැති වී මිලට පමණක් සංවේදී අය පමණක් ඉතිරි වේ."
+                                            },
+                                            {
+                                                q_en: "4. Why do highly prospective agricultural IoT systems fail to bridge the chasm between Early Adopters and the pragmatic Early Majority?",
+                                                q_si: "4. කෘෂිකාර්මික ස්මාර්ට් උපාංග හෝ හරිත බලශක්ති විසඳුම් බොහෝමයක් 'Early Adopters' ගෙන් 'Early Majority' වෙත පැමිණීමේදී අසාර්ථක වන්නේ ඇයි?",
+                                                bp_en: "Early Adopters absorb installation difficulties for novelty. The pragmatic majority requires zero assembly issues, robust warranty schemes, and on-call regional support centers.",
+                                                bp_si: "මුල් කාලීනයන් (Early Adopters) තාක්ෂණයට ඇති ආශාවට මිලදී ගත්තත්, ප්‍රායෝගික බහුතරය (Early Majority) බලාපොරොත්තු වන්නේ අඛණ්ඩ සේවා සහය, පහසු ගෙවීමේ ක්‍රම සහ දෝෂ රහිත පූර්ණ නිෂ්පාදනයක් (Whole Product) වීමයි."
+                                            },
+                                            {
+                                                q_en: "5. When is a Skimming pricing model fundamentally superior to a low-cost Penetration setup for a technology launch?",
+                                                q_si: "5. කුමන ආකාරයේ මෙහෙයුම් මුදල් ප්‍රවාහ (Cash flow) සහ වෙළඳපල තරඟකාරීත්ව තත්ත්ව යටතේදී මිල උරාගැනීම (Price Skimming) වෙළඳපල ආක්‍රමණයට වඩා උසස් වේද?",
+                                                bp_en: "Highly superior when R&D costs are substantial and demand immediate liquidity, patents actively prevent immediate competitive copycats, and early market segments exhibit high willingness-to-pay.",
+                                                bp_si: "R&D පිරිවැය ඉක්මනින් පියවා ගැනීමට අවශ්‍ය වන විට, නව නිපැයුම් පේටන්ට් බලපත්‍ර මඟින් තරඟකරුවන්ගෙන් ආරක්ෂා කර ඇති විට සහ ඉහළ ආදායම් ලබන ගැනුම්කරුවන් පමණක් මුල් අවධියේ සිටින විට මෙය උසස් වේ."
+                                            }
+                                        ].map((item, idx) => (
+                                            <div 
+                                                key={idx}
+                                                className="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-slate-700 transition duration-150 cursor-pointer"
+                                                onClick={() => setBreakoutActive(breakoutActive === idx ? null : idx)}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="space-y-1">
+                                                        <h4 className="text-sm font-bold text-white">
+                                                            <Bilingual en={item.q_en} si={item.q_si} />
+                                                        </h4>
+                                                    </div>
+                                                    <span className="text-emerald-400 font-bold text-xs shrink-0 pl-4">
+                                                        {breakoutActive === idx ? (
+                                                            <Bilingual en="▲ Hide Blueprint" si="▲ මාර්ගෝපදේශය සඟවන්න" />
+                                                        ) : (
+                                                            <Bilingual en="▼ Reveal Blueprint" si="▼ මාර්ගෝපදේශය බලන්න" />
+                                                        )}
+                                                    </span>
+                                                </div>
+
+                                                {/* Expanded Blueprint Details */}
+                                                {breakoutActive === idx && (
+                                                    <div className="mt-4 pt-4 border-t border-slate-800/85 bg-slate-950/40 p-4 rounded-xl space-y-2" onClick={(e) => e.stopPropagation()}>
+                                                        <span className="text-[10px] font-extrabold text-brand-400 uppercase tracking-widest block font-sans">
+                                                            <Bilingual en="Facilitator's Blueprint Guide:" si="දේශකයාගේ මාර්ගෝපදේශය:" />
+                                                        </span>
+                                                        <div className="text-xs text-slate-300 leading-relaxed space-y-2">
+                                                            <Bilingual en={item.bp_en} si={item.bp_si} />
+                                                        </div>
+                                                        <div className="mt-3 flex items-center space-x-2">
+                                                            <input 
+                                                                type="checkbox" 
+                                                                id={`check-${idx}`}
+                                                                checked={!!breakoutCompleted[idx]}
+                                                                onChange={(e) => setBreakoutCompleted({...breakoutCompleted, [idx]: e.target.checked})}
+                                                                className="w-3.5 h-3.5 rounded text-emerald-500 bg-slate-900 border-slate-800 focus:ring-emerald-500 animate-none"
+                                                            />
+                                                            <label htmlFor={`check-${idx}`} className="text-[10px] text-slate-500 font-semibold select-none cursor-pointer">
+                                                                <Bilingual en="Mark this breakout prompt as complete." si="මෙම සාකච්ඡාව අවසන් කළ බව ලකුණු කරන්න." />
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                        </div>
+
+                        {/* GLOBAL BOTTOM PRACTICUM STATS HEADER */}
+                        <footer className="no-print mt-auto glass-panel border-t border-slate-800/80 p-4 text-center text-xs text-slate-500">
+                            <div>
+                                <Bilingual en="OBISL Campus • Ocean Bridge International • Product & Pricing Practicum Hub" si="OBISL පරිශ්‍රය • ඕෂන් බ්‍රිජ් ඉන්ටර්නැෂනල් • භාණ්ඩ සහ මිලකරණ උපායමාර්ග ප්‍රායෝගික කේන්ද්‍රය" />
+                            </div>
+                        </footer>
+
+                    </main>
+                </div>
+            );
+        }
+
+        // Initialize React Application via ReactDOM.createRoot
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
